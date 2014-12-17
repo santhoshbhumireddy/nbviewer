@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+{% block extra_head %}
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <div id="popup_overlay" style="display:none;"></div>
+  <div id="spinner" class="spinner" style="display:none;">
+     <img id="img-spinner" src="/static/ochorizon/icons/loading.gif" alt="Loading"/>
+  </div>
+  <link href="/static/css/nb/styles.css" rel="stylesheet">
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+  <script src='/static/js/nb/application.js' type='text/javascript'></script>
+</head>
+{% endblock %}
+
+{% block body %}
+<body>
+  <div id="container">
+    <div class="span12">
+      <h2 style='display:inline;margin-left:0px;' title="Networks">Notebooks</h2>
+      <a href="#/nb_new" class="ajax-load" style='float:right;margin-right:100px;'>Create</a>
+      <a href="#/nb_upload" class="ajax-load" style='float:right;margin-right:50px;'>Upload</a>
+    </div>
+    <table class="sortable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Created Time</th>
+          <th>Updated Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+       {% for nb in user_notebooks %}
+          <tr>
+              <td>{{nb.name}}</td>
+              <td>{{nb.created}}</td>
+              <td>{{nb.last_modified}}</td>
+              <td>
+                <a href='/localfile/{{nb.path}}'>View</a>
+                <a href='/nb_run/?{{nb.path}}'>Run/Edit</a>
+                <a class="ajax-load" href='#/nb_delete/?{{nb.name}}'>Delete</a>
+              </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>   
+  </div> 
+  <!--
+  <div id="container">
+    <h2>Public Notebooks</h2>
+    
+    <table class="sortable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Date Modified</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+       {% for nb in public_notebooks %}
+          <tr>
+              <td>{{nb.name}}</td>
+              <td>{{nb.last_modified}}</td>
+              <td>
+                <a href='/localfile/{{nb.name}}.ipynb'>View</a>
+              </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>   
+  </div>
+  -->   
+</body>
+{% endblock %}

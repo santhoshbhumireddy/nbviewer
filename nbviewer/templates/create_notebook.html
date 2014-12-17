@@ -1,0 +1,18 @@
+{% extends "popup_base.html" %}
+{% block popup_content %}
+<form class="popup-form" action="/nb_new" method='post'>
+    <fieldset>
+          <legend>Create Notebook</legend>
+            <div class="span12">
+                <div class="span4" style="min-height:65px;">
+                    <label for="Name">Name</label>
+                    <input type="text" class="form-control" id="Name" name="NBName" placeholder="Untitled">
+                </div>
+            </div>
+    </fieldset>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a class="btn cancel_button">Cancel</a>
+    </div>
+</form>
+{% endblock %}

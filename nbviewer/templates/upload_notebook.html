@@ -1,0 +1,22 @@
+{% extends "popup_base.html" %}
+{% block popup_content %}
+<form class="popup-form" enctype="multipart/form-data" action="/nb_upload" method='post'>
+    <fieldset>
+          <legend>Upload Notebook</legend>
+            <div class="span6">
+                <div class="span4" style="min-height:65px;">
+                    <label for="Name">Name</label>
+                    <input type="text" class="form-control" id="Name" name="NBName" placeholder="Untitled">
+                </div>
+                <div class="span4" style="min-height:65px;">
+                    <label for="Name">Upload</label>
+                    <input type="file" class="form-control" id="Name" name="file">
+                </div>
+            </div>
+    </fieldset>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <a class="btn cancel_button">Cancel</a>
+    </div>
+</form>
+{% endblock %}
