@@ -45,9 +45,10 @@ from .render import render_notebook, NbFormatError
 from .utils import (transform_ipynb_uri, quote, response_text, base64_decode,
                     parse_header_links, clean_filename)
 from .auth import check_login_credentials
-from .notebooks import get_notebooks, get_notebook_info, create_notebook, delete_notebook, upload_notebook
-from .redisclient import getUserId, setUserId
-from pycket.session import SessionManager, SessionMixin
+from .notebooks import (get_notebooks, get_notebook_info, create_notebook, 
+        delete_notebook, upload_notebook)
+from .redisclient import getUserId
+
 
 date_fmt = "%a, %d %b %Y %H:%M:%S UTC"
 
@@ -377,9 +378,10 @@ class LoginHandler(BaseHandler):
     def post(self):
         username = self.get_argument("username")
         password = self.get_argument("password")
-        if check_login_credentials(username, password) or True:
+        if check_login_credentials(username, password):
             userid = getUserId(username.split("@")[0])
             self.set_secure_cookie("user_id", userid)
+            self.set_secure_cookie("user_name", username)
             user_notebooks_path = os.path.join(
                 self.settings.get('localfile_path', ''),
                 userid,
@@ -388,37 +390,16 @@ class LoginHandler(BaseHandler):
                 os.makedirs(user_notebooks_path)
             self.redirect("/profile")
         else:
-            self.redirect("/login")
+            #self.redirect("/login")
+            raise web.HTTPError(401)
 
 class LogoutHandler(BaseHandler):
     """Render the login page"""
 
     def get(self):
         self.clear_cookie("user_id")
+        self.clear_cookie("user_nmae")
         self.redirect("/login")
-
-"""
-class LoginSubmitHandler(web.RequestHandler, SessionMixin):
-    Render the login page
-    def get(self):
-        username = self.request.arguments['username'][0]
-        password = self.request.arguments['password'][0]
-        self.response = dict()
-        if check_login_credentials(username, password):
-            if not self.get_secure_cookie("user_id"):
-                self.set_secure_cookie("user_id", getUserId(username.split("@")[0]))
-            self.session.set('foo', ['bar', 'baz'])
-            foo = self.session.get('foo') # will get back the list ['bar', 'baz']
-            session = SessionManager(self)
-            session.set('foo', ['bar', 'baz'])
-            foo = session.get('foo') # will get back the list ['bar', 'baz']
-            self.response['error'] = False
-            self.response['redirect'] = '/dashboard/' + getUserId(username.split("@")[0])
-        else:
-            self.response['error'] = True
-            self.response['errors'] = "Invalid Credentials"
-        self.write(json.dumps(self.response))
-"""
 
 class ProfileHandler(BaseHandler):
     """Render the Pofile page"""
@@ -433,14 +414,14 @@ class ProfileHandler(BaseHandler):
         public_notebooks = []
         self.finish(self.render_template('dashboard.html', 
             user_notebooks=user_notebooks, 
-            public_notebooks=public_notebooks))
+            public_notebooks=public_notebooks, username=self.get_secure_cookie("user_name")))
 
 class NotebookRunHandler(BaseHandler):
     """Render the Notebook Run page"""
     def get(self):
         nb_file_path = self.request.query
         nb_url = self.settings.get('ipython_notebook_url') + "/notebooks/" + nb_file_path
-        self.finish(self.render_template('nb_run.html', nb_url=nb_url))
+        self.finish(self.render_template('nb_run.html', nb_url=nb_url, username=self.get_secure_cookie("user_name")))
 
 class NotebookCreateHandler(BaseHandler):
     """Render the Notebook create page"""
@@ -1094,7 +1075,7 @@ class LocalFileHandler(RenderingHandler):
 
     Serving notebooks from the local filesystem
     """
-    #@cached
+    @cached
     @gen.coroutine
     def get(self, path):
         abspath = os.path.join(
@@ -1123,7 +1104,6 @@ handlers = [
     ('/index.html', IndexHandler),
     (r'/login', LoginHandler),
     (r'/logout', LogoutHandler),
-    #(r'/login_submit', LoginSubmitHandler),
     (r'/profile', ProfileHandler),
     (r'/nb_run/?', NotebookRunHandler),
     (r'/nb_delete/?', NotebookDeleteHandler),

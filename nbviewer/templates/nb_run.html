@@ -20,6 +20,12 @@
 
 {% block body %}
 <body>
-  <iframe id="notebook" name="inlineframe" src="{{nb_url}}" frameborder="0" scrolling="auto" width="1280" height="700" marginwidth="5" marginheight="5" ></iframe>
+   <div class="span12">
+      <h3 style='display:inline;margin-left:0px;' title="Networks">Imaginea Labs Notebooks Dashboard</h3>
+      <a href="/logout" class="ajax-load" style='float:right;margin-right:10px;margin-top:10px;'>{{username}}/LogOut</a>
+  </div>
+  <div class="span12" style="border:1px solid;">
+  	<iframe id="notebook" name="inlineframe" src="{{nb_url}}" frameborder="0" scrolling="auto" width="1170" height="700" marginwidth="5" marginheight="5" ></iframe>
+  </div>
 </body>
 {% endblock %}

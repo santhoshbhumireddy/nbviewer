@@ -79,6 +79,7 @@ def main():
     define("frontpage", default=FRONTPAGE_JSON, help="path to json file containing frontpage content", type=str)
     define("sslcert", help="path to ssl .crt file", type=str)
     define("sslkey", help="path to ssl .key file", type=str)
+    define("notebook_url", default="http://127.0.0.1:9999", help="noebook server url", type=str)
     tornado.options.parse_command_line()
 
     # NBConvert config
@@ -200,17 +201,7 @@ def main():
             connect_timeout=10,
         ),
         cookie_secret=str(uuid.uuid4()),
-        pycket=dict(
-            engine='redis',
-            storage=dict(
-                    host='localhost',
-                    port=6379,
-                    db_sessions=10,
-                    db_notifications=11
-                ),
-            cookies=dict(expires_days=120)
-        ),
-        ipython_notebook_url = "http://172.17.42.1:9999" 
+        ipython_notebook_url = options.notebook_url
     )
 
     # create and start the app
