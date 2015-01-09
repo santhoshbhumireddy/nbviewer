@@ -10,8 +10,8 @@
   <link href="/static/nb/css/jquery.dataTables.css" rel='stylesheet' type='text/css'>
   <link href="/static/nb/css/data_table.css" rel='stylesheet' type='text/css'>
   <link href="/static/nb/css/styles.css" rel="stylesheet">
-  <script src='/static/nb/js/jquery.min.js' type='text/javascript'></script>
-  <script src='/static/nb/js/jquery.dataTables.min.js' type='text/javascript'></script>
+  <script src='/static/nb/js/jquery.js' type='text/javascript'></script>
+  <script src='/static/nb/js/jquery.dataTables.js' type='text/javascript'></script>
   <script src='/static/nb/js/application.js' type='text/javascript'></script>
 </head>
 {% endblock %}
@@ -47,11 +47,45 @@
                 <a href='/localfile/{{nb.path}}'>View</a>
                 <a href='/nb_run/?{{nb.path}}'>Run/Edit</a>
                 <a class="ajax-load" href='#/nb_delete/?{{nb.name}}'>Delete</a>
+                <a class="ajax-load" href='#/nb_publish/?{{nb.path}}'>Publish</a>
               </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>   
-  </div> 
+  </div>
+  <div class="span12 table_container">
+    <div class="span12 title">
+      <h2 style='display:inline;margin-left:0px;' title='Flows'>Published Notebooks</h2>
+    </div>
+    <table id="notebooks_table" class="table table-stripped table-bordered">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Published By</th>
+          <th>Published Time</th>
+          <th>Updated Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+       {% for nb in public_notebooks %}
+          <tr>
+              <td>{{nb.presentation_name}}</td>
+              <td>{{nb.published_by}}</td>
+              <td>{{nb.created}}</td>
+              <td>{{nb.last_modified}}</td>
+              <td>
+                <a href='/localfile/{{nb.path}}'>View</a>
+                {% if nb.published_by in username %}
+                  <a href='/nb_run/?{{nb.path}}'>Run/Edit</a>
+                  <a class="ajax-load" href='#/nb_unpublish/?{{nb.name}}'>UnPublish</a>
+                {% endif %} 
+              </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>   
+  </div>  
 </body>
 {% endblock %}

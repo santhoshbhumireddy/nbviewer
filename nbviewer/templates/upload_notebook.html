@@ -1,6 +1,6 @@
 {% extends "popup_base.html" %}
 {% block popup_content %}
-<form class="popup-form" enctype="multipart/form-data" action="/nb_upload" method='post'>
+<form class="popup-form notebook_upload_form" enctype="multipart/form-data" action="/nb_upload" method='post'>
     <fieldset>
           <legend>Upload Notebook</legend>
             <div class="span6">
@@ -10,7 +10,15 @@
                 </div>
                 <div class="span4" style="min-height:65px;">
                     <label for="Name">Upload</label>
-                    <input type="file" class="form-control" id="Name" name="file">
+                    <input type="file" class="form-control" id="Name" name="file" required>
+                </div>
+                <div class="span4" style="min-height:65px;">
+                    <label for="Name">Publish</label>
+                    <input type="checkbox" class="form-control" id="publish", name="publish">
+                </div>
+                <div class="span4" style="min-height:65px;">
+                    <label for="Name">Published Notebook Name As:</label>
+                    <input type="text" class="form-control" id="publish_name" name="publish_nb_name"  required>
                 </div>
             </div>
     </fieldset>
@@ -19,4 +27,20 @@
         <a class="btn cancel_button">Cancel</a>
     </div>
 </form>
+<script type="text/javascript">
+$(function(){
+  $("#publish_name").parent().hide();
+  $("#publish_name").prop("required", false);
+  $("form.notebook_upload_form #publish").click(function(){
+    if($("#publish").is(':checked')){
+      $("#publish_name").parent().show();
+      $("#publish_name").prop("required", true);
+    }
+    else{
+      $("#publish_name").parent().hide();
+      $("#publish_name").prop("required", false);
+    }
+  }) 
+})
+</script>
 {% endblock %}

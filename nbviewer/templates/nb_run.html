@@ -5,16 +5,19 @@
   <title>NoteBook Run Environment</title>
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
   <script type="text/javascript">
-		$(function(){
-			var iframe = $('#notebook')
-			iframe.load(function(){ 
-				iframe.contents().find('#new_notebook').remove(); 
-				iframe.contents().find('#open_notebook').remove(); 
-				iframe.contents().find('#copy_notebook').remove(); 
-				iframe.contents().find('#rename_notebook').remove(); 
-			})
-		})
-	</script>
+    $(function(){
+      var iframe = $('#notebook')
+      iframe.load(function(){
+        console.log("iframe Contents*****")
+        console.log(iframe.contents())
+        iframe.contents().find('#new_notebook').remove(); 
+        iframe.contents().find('#open_notebook').remove(); 
+        iframe.contents().find('#copy_notebook').remove(); 
+        iframe.contents().find('#rename_notebook').remove(); 
+      })
+      */
+    })
+  </script>
 </head>
 {% endblock %}
 

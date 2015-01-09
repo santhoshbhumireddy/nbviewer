@@ -46,7 +46,7 @@ from .utils import (transform_ipynb_uri, quote, response_text, base64_decode,
                     parse_header_links, clean_filename)
 from .auth import check_login_credentials
 from .notebooks import (get_notebooks, get_notebook_info, create_notebook, 
-        delete_notebook, upload_notebook)
+        delete_notebook, upload_notebook, publish_notebook)
 from .redisclient import getUserId
 
 
@@ -358,6 +358,16 @@ class BaseHandler(web.RequestHandler):
     def get_current_user(self):
         return self.get_secure_cookie("user_id")
 
+def requires_auth(method):
+    """decorator for a authentocation.
+    """
+    def authenticate(self, *args, **kwargs):
+        if not self.current_user:
+            self.redirect("/login")
+            #return
+        return method(self, *args, **kwargs)
+    return authenticate
+
 class Custom404(BaseHandler):
     """Render our 404 template"""
     def prepare(self):
@@ -390,7 +400,6 @@ class LoginHandler(BaseHandler):
                 os.makedirs(user_notebooks_path)
             self.redirect("/profile")
         else:
-            #self.redirect("/login")
             raise web.HTTPError(401)
 
 class LogoutHandler(BaseHandler):
@@ -403,36 +412,73 @@ class LogoutHandler(BaseHandler):
 
 class ProfileHandler(BaseHandler):
     """Render the Pofile page"""
+
+    @requires_auth
     def get(self):
-        if not self.current_user:
-            self.redirect("/login")
-            return
         user_id = escape.xhtml_escape(self.current_user)
         nb_url = self.settings.get('ipython_notebook_url')
         user_notebooks = get_notebooks(nb_url, user_id=user_id)
-        #public_notebooks = get_notebooks(public=True)
-        public_notebooks = []
+        public_notebooks = get_notebooks(nb_url, public=True)
         self.finish(self.render_template('dashboard.html', 
             user_notebooks=user_notebooks, 
-            public_notebooks=public_notebooks, username=self.get_secure_cookie("user_name")))
+            public_notebooks=public_notebooks, 
+            username=self.get_secure_cookie("user_name")))
 
 class NotebookRunHandler(BaseHandler):
     """Render the Notebook Run page"""
+
+    @requires_auth
     def get(self):
         nb_file_path = self.request.query
         nb_url = self.settings.get('ipython_notebook_url') + "/notebooks/" + nb_file_path
-        self.finish(self.render_template('nb_run.html', nb_url=nb_url, username=self.get_secure_cookie("user_name")))
+        self.finish(self.render_template('nb_run.html', nb_url=nb_url, 
+            username=self.get_secure_cookie("user_name")))
+
+class NotebookPublishHandler(BaseHandler):
+    """Render the Notebook publish page"""
+
+    def get(self):
+        nb_file_path = self.request.query
+        nb_name = nb_file_path.split("/")[-1]
+        self.finish(self.render_template('publish_notebook.html', 
+            nb_path=nb_file_path, 
+            nb_name=nb_name))
+
+    @requires_auth
+    def post(self, *args, **kwargs):
+        nb_name = self.get_argument('NBName')
+        src_path = self.request.query
+        nb_url = self.settings.get('ipython_notebook_url')
+        publish_notebook(nb_url, src_path, nb_name)
+        self.redirect('/profile')
+
+class NotebookUnPublishHandler(BaseHandler):
+    """Render the Notebook unpublish page"""
+
+    def get(self):
+        nb_name = self.request.query
+        nb_presentation_name = "_".join(nb_name.split("_")[1:])
+        self.finish(self.render_template('unpublish_notebook.html', 
+            nb_name=nb_name,
+            nb_presentation_name=nb_presentation_name))
+
+    @requires_auth
+    def post(self, *args, **kwargs):
+        nb_name = self.request.query
+        user_id = escape.xhtml_escape(self.current_user)
+        nb_url = self.settings.get('ipython_notebook_url')
+        if delete_notebook(nb_url, "public", nb_name):
+            self.redirect('/profile')
 
 class NotebookCreateHandler(BaseHandler):
     """Render the Notebook create page"""
+
     def get(self):
         self.finish(self.render_template('create_notebook.html'))
 
+    @requires_auth
     def post(self, *args, **kwargs):
         nb_name = self.get_argument('NBName')
-        if not self.current_user:
-            self.redirect("/login")
-            return
         user_id = escape.xhtml_escape(self.current_user)
         nb_url = self.settings.get('ipython_notebook_url')
         data = create_notebook(nb_url, user_id, nb_name)
@@ -442,15 +488,14 @@ class NotebookCreateHandler(BaseHandler):
 
 class NotebookDeleteHandler(BaseHandler):
     """Render the Notebook delete page"""
+
     def get(self):
         nb_name = self.request.query
         self.finish(self.render_template('delete_notebook.html', nb_name=nb_name))
 
+    @requires_auth
     def post(self, *args, **kwargs):
         nb_name = self.request.query
-        if not self.current_user:
-            self.redirect("/login")
-            return
         user_id = escape.xhtml_escape(self.current_user)
         nb_url = self.settings.get('ipython_notebook_url')
         if delete_notebook(nb_url, user_id, nb_name):
@@ -458,19 +503,28 @@ class NotebookDeleteHandler(BaseHandler):
 
 class NotebookUploadHandler(BaseHandler):
     """Render the Notebook upload page"""
+
     def get(self):
         self.finish(self.render_template('upload_notebook.html'))
 
+    @requires_auth
     def post(self, *args, **kwargs):
         nb_name = self.get_argument('NBName')
         content = self.request.files['file'][0]['body']
-        if not self.current_user:
-            self.redirect("/login")
-            return
+        publish = self.get_argument('publish')
         user_id = escape.xhtml_escape(self.current_user)
         nb_url = self.settings.get('ipython_notebook_url')
-        if upload_notebook(nb_url, user_id, nb_name, content):
-            self.redirect('/profile')
+        upload_notebook(nb_url, user_id, nb_name, content)
+        if publish:
+            public_notebooks_path = os.path.join(
+                self.settings.get('localfile_path', ''),
+                "public",
+            )
+            if not os.path.exists(public_notebooks_path):
+                os.makedirs(public_notebooks_path)
+            nb_name = self.get_argument('publish_nb_name')
+            upload_notebook(nb_url, "public", user_id + "_" + nb_name, content)
+        self.redirect('/profile')
 
 class FAQHandler(BaseHandler):
     """Render the markdown FAQ page"""
@@ -1106,6 +1160,8 @@ handlers = [
     (r'/logout', LogoutHandler),
     (r'/profile', ProfileHandler),
     (r'/nb_run/?', NotebookRunHandler),
+    (r'/nb_publish/?', NotebookPublishHandler),
+    (r'/nb_unpublish/?', NotebookUnPublishHandler),
     (r'/nb_delete/?', NotebookDeleteHandler),
     (r'/nb_new', NotebookCreateHandler),
     (r'/nb_upload', NotebookUploadHandler),

@@ -1,0 +1,13 @@
+{% extends "popup_base.html" %}
+{% block popup_content %}
+<form class="popup-form" action="/nb_unpublish/?{{nb_name}}" method='post'>
+    <fieldset>
+          <legend>UnPublish Notebook</legend>
+          <label class='error_label' id='non_field_errors'>Are you sure you want to permanently unpblish the notebook: {{nb_presentation_name}}?</label>
+    </fieldset>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Unpublish</button>
+        <a class="btn cancel_button">Cancel</a>
+    </div>
+</form>
+{% endblock %}

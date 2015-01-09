@@ -1,4 +1,21 @@
 $(function(){
+    var notebooks = $('#notebooks_table').DataTable();
+    /*
+    var hidePagination = function(oSettings){
+        var id = oSettings.sTableId;
+        if(oSettings.aoData.length <= 10){
+                $("#"+id+"_paginate").hide()    
+        }
+    }
+	var networksTb = $("#notebooks_table").dataTable({
+        'bLengthChange':false,
+        'sPaginationType':"full_numbers",
+        'aoColumnDefs':[
+            {'bSortable':false,'aTargets':[0,8,9,10]}
+        ],
+        'fnInitComplete':hidePagination
+    });
+	*/
     NBViewer = {}
 	NBViewer.notebooks = (function(){
 		var ajax_load = function(url,data){
@@ -27,7 +44,7 @@ $(function(){
                       $("div#popup_overlay, div#popup_content").remove();
                     });
 				}
-			}) 
+			})
 		}	
 
 		var handle_remote_loading = function(href){

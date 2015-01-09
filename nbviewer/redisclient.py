@@ -7,7 +7,9 @@ POOL = redis.ConnectionPool(host='localhost', port=6379, db=0)
 def setUserId(username):
 	r = redis.Redis(connection_pool=POOL)
 	userid = hashlib.sha256(username.encode()).hexdigest() 
-	if r.hset('users', username, userid):return userid
+	r.hset('users', username, userid)
+	r.hset('users', userid, username)
+	return userid
 
 def getUserId(username):
 	r = redis.Redis(connection_pool=POOL)
@@ -15,6 +17,11 @@ def getUserId(username):
 	if userid is None:
 		return setUserId(username)
 	return userid
+
+def getUserName(userid):
+	r = redis.Redis(connection_pool=POOL)
+	username = r.hget('users', userid)
+	return username
 
 def getNoteBooks(userid):
 	r = redis.Redis(connection_pool=POOL)

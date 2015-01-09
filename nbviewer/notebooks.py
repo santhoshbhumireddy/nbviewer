@@ -2,12 +2,11 @@ import os, time
 import urllib2
 import json
 import requests
-from .redisclient import  getNoteBooks
+from .redisclient import  getUserName
 
 def get_notebooks(nb_url, user_id=None, public=False):
 	notebooks = []
 	if user_id is not None:
-		#return getNoteBooks(user_id)
 		headers = {'content-type': 'application/json'}
 		url = nb_url + "/api/notebooks/" + user_id
 		try:
@@ -18,16 +17,31 @@ def get_notebooks(nb_url, user_id=None, public=False):
 			 	notebooks.append(nb)
 		except:
 			return notebooks
+	elif public:
+		headers = {'content-type': 'application/json'}
+		url = nb_url + "/api/notebooks/public"
+		try:
+			r = requests.get(url,headers=headers)
+			for nb in r.json():
+			 if nb['type'] == "notebook":
+			 	nb['published_by'] = getUserName(nb['name'].split("_")[0])
+			 	nb['path'] += "/" + nb['name']
+			 	nb['presentation_name'] = "_".join(nb['name'].split("_")[1:])
+			 	notebooks.append(nb)
+		except:
+			return notebooks
 	return notebooks
 
-def get_notebook_info(nb_url, nb_name):
-	data = urllib2.urlopen(nb_url)
-	json_data = data.read()
-	list_of_dicts = json.loads(json_data)
-	for d in list_of_dicts:
-		if d['name'] == nb_name:
-			return d['notebook_id']
-	return None
+def get_notebook_info(nb_url, path):
+	notebook = {}
+	headers = {'content-type': 'application/json'}
+	url = nb_url + "/api/notebooks/" + path
+	try:
+		r = requests.get(url,headers=headers)
+		return r.json()
+	except:
+		return notebook
+	return notebook
 
 def create_notebook(nb_url, path, nb_name):
 	headers = {'content-type': 'application/json'}
@@ -60,6 +74,17 @@ def upload_notebook(nb_url, path, nb_name, content):
 			return True
 	except:
 		return False
+
+def publish_notebook(nb_url, src_path, nb_name):
+	try:
+		headers = {'content-type': 'application/json'}
+		notebook = get_notebook_info(nb_url, src_path)
+		nb_name = src_path.split("/")[0] + "_" + nb_name
+		if nb_name.endswith('.ipynb'): nb_name += ".ipynb"
+		upload_notebook(nb_url, "public", nb_name, 
+			json.dumps(notebook['content']))
+	except:
+		return
 
 def delete_notebook(nb_url, path, nb_name):
 	headers = {'content-type': 'application/json'}
