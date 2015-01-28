@@ -2,7 +2,6 @@ import os, time
 import urllib2
 import json
 import requests
-from .redisclient import  getUserName
 
 def get_notebook_sessionId(sessions, nb):
 	for session in sessions:
@@ -10,6 +9,7 @@ def get_notebook_sessionId(sessions, nb):
 			session['notebook']['name'] == nb['name']:
 			return session['id']
 	return False
+	
 def get_notebooks(nb_url, user_id=None, public=False):
 	notebooks = []
 	headers = {'content-type': 'application/json'}
@@ -37,7 +37,6 @@ def get_notebooks(nb_url, user_id=None, public=False):
 			r = requests.get(url,headers=headers)
 			for nb in r.json():
 			 if nb['type'] == "notebook":
-			 	nb['published_by'] = getUserName(nb['name'].split("_")[0])
 			 	nb['path'] += "/" + nb['name']
 			 	nb['presentation_name'] = "_".join(nb['name'].split("_")[1:])
 			 	notebooks.append(nb)
@@ -101,7 +100,6 @@ def publish_notebook(nb_url, src_path, nb_name):
 	try:
 		headers = {'content-type': 'application/json'}
 		notebook = get_notebook_info(nb_url, src_path)
-		print "notebook info****", notebook
 		nb_name = src_path.split("/")[0] + "_" + nb_name
 		if nb_name.endswith('.ipynb'): nb_name += ".ipynb"
 		upload_notebook(nb_url, "public", nb_name, 

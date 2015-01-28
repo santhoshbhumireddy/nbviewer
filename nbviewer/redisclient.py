@@ -34,3 +34,17 @@ def appendNoteBook(userid, notebook):
 	notebooks = getNoteBooks(userid)
 	if notebook not in notebooks:notebooks.append(notebook)
 	return r.hset('user:'+str(userid), 'notebooks', json.dumps(notebooks))
+
+def getPublishNotebooks():
+	r = redis.Redis(connection_pool=POOL)
+	notebooks = r.hget('public', 'notebooks')
+	if notebooks is None: return []
+	elif isinstance(notebooks, str):return eval(notebooks)
+
+def publishNotebook(notebook):
+	r = redis.Redis(connection_pool=POOL)
+	notebooks = r.hget('public', 'notebooks')
+	if notebooks is None: notebooks = []
+	notebooks.append(notebook)
+	notebooks = r.hset('public', 'notebooks', notebooks)
+	return notebooks
