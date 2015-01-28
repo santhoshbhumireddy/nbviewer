@@ -37,7 +37,7 @@ table {
 
 th {
     background-color: #FE4902;
-    color: #FFF;
+    /*color: #FFF;*/
     cursor: pointer;
     padding: 5px 10px;
 }
@@ -231,4 +231,8 @@ div.table_container thead{
     text-align:center;
     width: 100px; /* width of the spinner gif */
     height: 102px; /*hight of the spinner gif +2px to fix IE8 issue */
+}
+select{
+    width:60px;
+    height:25px;
 }

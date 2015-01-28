@@ -12,7 +12,7 @@ div.inner_detail{
 	float: right;
     margin-left: 10px;
     margin-right: 30px;
-    margin-top: -28px;
+    /*margin-top: -28px;*/
     text-align: left;
     width: auto;
 }

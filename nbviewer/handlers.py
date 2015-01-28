@@ -46,7 +46,7 @@ from .utils import (transform_ipynb_uri, quote, response_text, base64_decode,
                     parse_header_links, clean_filename)
 from .auth import check_login_credentials
 from .notebooks import (get_notebooks, get_notebook_info, create_notebook, 
-        delete_notebook, upload_notebook, publish_notebook)
+        delete_notebook, upload_notebook, publish_notebook, shutdown_notebook)
 from .redisclient import getUserId
 
 
@@ -433,6 +433,15 @@ class NotebookRunHandler(BaseHandler):
         nb_url = self.settings.get('ipython_notebook_url') + "/notebooks/" + nb_file_path
         self.finish(self.render_template('nb_run.html', nb_url=nb_url, 
             username=self.get_secure_cookie("user_name")))
+
+class NotebookShutdownHandler(BaseHandler):
+    """Render the profile page"""
+
+    def get(self):
+        session_id = self.request.query
+        nb_url = self.settings.get('ipython_notebook_url')
+        shutdown_notebook(nb_url, session_id)
+        self.redirect("/profile")
 
 class NotebookPublishHandler(BaseHandler):
     """Render the Notebook publish page"""
@@ -1163,6 +1172,7 @@ handlers = [
     (r'/nb_publish/?', NotebookPublishHandler),
     (r'/nb_unpublish/?', NotebookUnPublishHandler),
     (r'/nb_delete/?', NotebookDeleteHandler),
+    (r'/nb_shutdown/?', NotebookShutdownHandler),
     (r'/nb_new', NotebookCreateHandler),
     (r'/nb_upload', NotebookUploadHandler),
     (r'/faq/?', FAQHandler),

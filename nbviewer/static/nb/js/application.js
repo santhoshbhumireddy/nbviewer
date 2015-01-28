@@ -1,5 +1,7 @@
 $(function(){
-    	NBViewer = {}
+    $('#notebooks_table').DataTable();
+    $('#public_notebooks_table').DataTable();
+    NBViewer = {}
 	NBViewer.notebooks = (function(){
 		var ajax_load = function(url,data){
  			$.ajax({

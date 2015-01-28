@@ -4,21 +4,34 @@ import json
 import requests
 from .redisclient import  getUserName
 
+def get_notebook_sessionId(sessions, nb):
+	for session in sessions:
+		if session['notebook']['path'] == nb['path'] and \
+			session['notebook']['name'] == nb['name']:
+			return session['id']
+	return False
 def get_notebooks(nb_url, user_id=None, public=False):
 	notebooks = []
+	headers = {'content-type': 'application/json'}
+	url = nb_url + "/api/sessions/"
+	sessions = []
+	try:
+		r = requests.get(url,headers=headers)
+		sessions = r.json()
+	except:
+		pass
 	if user_id is not None:
-		headers = {'content-type': 'application/json'}
 		url = nb_url + "/api/notebooks/" + user_id
 		try:
 			r = requests.get(url,headers=headers)
 			for nb in r.json():
 			 if nb['type'] == "notebook":
+			 	nb['session_id'] = get_notebook_sessionId(sessions, nb)
 			 	nb['path'] += "/" + nb['name']
 			 	notebooks.append(nb)
 		except:
 			return notebooks
 	elif public:
-		headers = {'content-type': 'application/json'}
 		url = nb_url + "/api/notebooks/public"
 		try:
 			r = requests.get(url,headers=headers)
@@ -42,6 +55,15 @@ def get_notebook_info(nb_url, path):
 	except:
 		return notebook
 	return notebook
+
+def shutdown_notebook(nb_url, session_id):
+	headers = {'content-type': 'application/json'}
+	url = nb_url + "/api/sessions/" + session_id
+	try:
+		r = requests.delete(url,headers=headers)
+		return r.json()
+	except:
+		return
 
 def create_notebook(nb_url, path, nb_name):
 	headers = {'content-type': 'application/json'}
@@ -79,6 +101,7 @@ def publish_notebook(nb_url, src_path, nb_name):
 	try:
 		headers = {'content-type': 'application/json'}
 		notebook = get_notebook_info(nb_url, src_path)
+		print "notebook info****", notebook
 		nb_name = src_path.split("/")[0] + "_" + nb_name
 		if nb_name.endswith('.ipynb'): nb_name += ".ipynb"
 		upload_notebook(nb_url, "public", nb_name, 
