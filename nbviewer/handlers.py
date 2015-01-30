@@ -47,7 +47,8 @@ from .utils import (transform_ipynb_uri, quote, response_text, base64_decode,
 from .auth import check_login_credentials
 from .notebooks import (get_notebooks, get_notebook_info, create_notebook, 
         delete_notebook, upload_notebook, publish_notebook, shutdown_notebook)
-from .redisclient import getPublishNotebooks, publishNotebook
+from .redisclient import (getPublishNotebooks, publishNotebook, 
+        setNotebookContent, getNotebookContent, setImage, getImage)
 import uuid
 
 date_fmt = "%a, %d %b %Y %H:%M:%S UTC"
@@ -491,7 +492,6 @@ class RenderingHandler(BaseHandler):
 
         msg is extra information for the log message when rendering fails.
         """
-
         if msg is None:
             msg = download_url
 
@@ -1052,13 +1052,9 @@ class NotebookViewHandler(RenderingHandler):
     @cached
     @gen.coroutine
     def get(self):
-        notebook_id = self.request.query()
-        if not os.path.exists(abspath):
-            raise web.HTTPError(404)
-
-        with io.open(abspath, encoding='utf-8') as f:
-            nbdata = f.read()
-
+        nb_id = self.request.query
+        nbdata = getNotebookContent(nb_id)
+        path = "/localfile"
         yield self.finish_notebook(nbdata, download_url=path,
                                    msg="file from localfile: %s" % path,
                                    public=False)
@@ -1091,19 +1087,21 @@ class NotebookPublishHandler(BaseHandler):
 
     @requires_auth
     def post(self, *args, **kwargs):
-        image = self.request.files['image'][0]['body']
         if self.request.query:
             notebook = get_notebook_info(self.settings.get('ipython_notebook_url'), src_path)
             content = notebook['content']
         else:
             content = self.request.files['notebook'][0]['body']
+        nb_id = setNotebookContent(content)
+        image = self.request.files['image'][0]['body']
+        image_id = None
+        if image:image_id = setImage(image)
         notebook = {
-            'id': str(uuid.uuid4()),
+            'id': nb_id,
             'name': self.get_argument('NBName'),
             'type': self.get_argument('type'),
             'rating': self.get_argument('rating'),
-            'image': image,
-            'content': content,
+            'image_id': image_id,
             'published_by':{
                 "id":self.current_user, 
                 "name":self.get_secure_cookie("user_name")
@@ -1180,7 +1178,14 @@ class NotebookUploadHandler(BaseHandler):
         upload_notebook(nb_url, user_id, nb_name, content)
         self.redirect('/profile')
 
-
+class ImageHandler(BaseHandler):
+    
+    """Render the Image"""
+    def get(self):
+        image_id = self.request.query
+        image = getImage(image_id)
+        self.set_header("Content-Type", 'image/jpeg')
+        self.write(image)
 
 #-----------------------------------------------------------------------------
 # Default handler URL mapping
@@ -1201,6 +1206,7 @@ handlers = [
     (r'/nb_shutdown/?', NotebookShutdownHandler),
     (r'/nb_new', NotebookCreateHandler),
     (r'/nb_upload', NotebookUploadHandler),
+    (r'/image/?', ImageHandler),
     (r'/create/?', CreateHandler),
     (r'/ipython-static/(.*)', web.StaticFileHandler, dict(path=ipython_static_path)),
 

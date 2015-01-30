@@ -1,6 +1,7 @@
 import redis
 import json
 import hashlib
+import uuid
 
 POOL = redis.ConnectionPool(host='localhost', port=6379, db=0)
 
@@ -34,6 +35,28 @@ def appendNoteBook(userid, notebook):
 	notebooks = getNoteBooks(userid)
 	if notebook not in notebooks:notebooks.append(notebook)
 	return r.hset('user:'+str(userid), 'notebooks', json.dumps(notebooks))
+
+def setImage(image):
+	r = redis.Redis(connection_pool=POOL)
+	image_id = str(uuid.uuid4())
+	r.hset('images', image_id, image)
+	return image_id
+
+def getImage(image_id):
+	r = redis.Redis(connection_pool=POOL)
+	image = r.hget('images', image_id)
+	return image
+
+def setNotebookContent(content):
+	r = redis.Redis(connection_pool=POOL)
+	nb_id = str(uuid.uuid4())
+	r.hset('notebooks', nb_id, content)
+	return nb_id
+
+def getNotebookContent(nb_id):
+	r = redis.Redis(connection_pool=POOL)
+	notebook = r.hget('notebooks', nb_id)
+	return notebook
 
 def getPublishNotebooks():
 	r = redis.Redis(connection_pool=POOL)
